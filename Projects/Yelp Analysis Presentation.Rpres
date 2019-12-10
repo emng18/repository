@@ -1,0 +1,121 @@
+Stat 694 Presentation: Analyzing Yelp Ratings of Similar Restaurants
+========================================================
+author: Elliot Ng
+class: Stat 694
+date: 12/6/19
+autosize: true
+
+
+Abstract
+========================================================
+On Yelp, there are many restaurants of the same culture in the same general area. These restaurants all tend to have similar ratings, making it hard to choose a clear winner. I implemented two stricter rating methods and examined their overall effect on the original ratings. The Yelp public data set was used for this problem.
+
+The first method was to only accept ratings from users who have reviewed multiple restaurants of the same type of cuisine. This eliminates bias from users who do not frequently eat the cusines they review. This method yielded a 0.075 lower star rating on average for each restaurant, which was not very significant.
+
+The second method was to only examine ratings from users who are from the culture of cusine that they reviewed (i.e only look at Japanese reviewers who reviewed Japanese food). People of the same culture of the cuisine they are reviewing may be more strict/harsh, which can have a significant impact on original ratings. This method yielded a 0.26 lower star rating on average for each restaurant, which is much more significant. 
+
+
+Problem Statement
+========================================================
+How can we better evaluate restaurants that serve the same cuisine in the same area? One problem of using Yelp in heavily populated cities is that there are several restaurants in the same plaza that all serve the same type of food. These restaurants all tend to have similar ratings, making it hard to pick the best one. To better evaluate restaurants, I implemented two stricter rating systems on each restaurant on the Yelp dataset.
+
+
+Data
+========================================================
+I used the Yelp public dataset. This is the same dataset that is used in challenges/competitions. It contains business, user, and review information.
+Link: https://www.yelp.com/dataset/challenge
+
+
+Methods/Results
+========================================================
+Python/Anaconda https://www.anaconda.com/distribution/
+
+Rstudio https://rstudio.com/
+
+Tidyverse https://www.tidyverse.org/
+
+Initial Data Processing/Cleaning: Done on Python by using a user-written function to read data and output a csv
+
+Data Analysis: Done on Rstudio mainly using Tidyverse packages. Main functions/uses were inner/outer joins, grepl, select/filter, summarise, and scan
+
+Two methods were used for this project:
+
+
+Method 1: Assign more weight to users who reviewed the same type of food more than once
+========================================================
+This method assures that only users who frequently eat a type of food would have more impact on the restaurant rating. The method was designed by the following rule: if a user has reviewed a certain type of food once, the rating remains the same. If twice, the rating is counted twice. If reviewed three times, the rating is counted three times, etc. 
+
+When applied to restaurants that mainly serve Indian food, we get the following summary statistics. These results show the average deviation from  original restaurant ratings:
+
+```{r}
+load("workspaceimage.RData")
+nri5 <- subset(new_rating_Indian, cnt > 5)
+summary(nri5$dif)
+```
+
+Method 2: Generate a new rating based off of users with ethnic surnames
+========================================================
+This methods attempts to only take into account users that are of the same ethnicity as the food they rate. For example, Indian restaurants will be rated based on users with Indian surnames. This was done by using a generated list of the 627 most common surnames in India. An average rating of all users with any of these names was created for each Indian restaurant, yielding the following results:
+
+```{r}
+ari5 <- subset (avg_rating_Indian, nin > 5)                                        
+summary(ari5$dif)
+
+```
+
+Other examples of code to get results
+========================================================
+Loop used to check if a username was on a list:
+```{r}
+#usernames=c()
+#for (i in 1:nrow(indian))
+#{
+#dum=as.character(indian$user_name[i])
+#len=nchar(dum)
+#kappa=substring(dum, 3,len-1)
+#usernames[i]=kappa
+#}
+#indian$reviewer_indian_name <- usernames %in% inames
+```
+
+
+How average ratings per cuisine was calculated:
+========================================================
+                                 
+```{r}
+#avg_rating_Indian <- indian %>% select(business_id, business_name, city, stars, 
+  #avg_stars, reviewer_indian_name, 
+  #is_indian, istars) %>%
+  #group_by(city, business_name, avg_stars) %>%
+  #summarise(count = n(),
+    #nin = sum(reviewer_indian_name),
+    #pin = sum(reviewer_indian_name) / n(),
+    #avg = sum(stars) / count,
+    #ias = sum(istars) / nin,
+    #dif = ias - avg)
+```
+
+
+Conclusions
+========================================================
+For Method 1 (weighted based on user's # of reviews): Average difference of -.075 stars for each restaurant
+
+For Method 2 (filter users by ethnic surnames): Average difference of -.26 stars for each restaurant
+
+Method 2 was much more significant. This method was also successful in narrowing down a best restaurant for each city, whereas Method 1 could narrow down a clear best restaurant only about 35% of the time. However, there are still obvious flaws with this method:
+
+- Names list was composed of commonly used surnames, but does not take into account people of mixed race or people who changed their name
+- There is no certain way to infer someone's race by name alone
+- Some names can be a part of several ethnicities/races
+
+Furtherwork: Give a short outline of next steps with your research project.
+========================================================
+- Improve on method of obtaining names (web scraping/automation)
+- Incorporating review text as part of the data analysis (NLP, keyword searching, # of characters analysis)
+- Analyze how ratings change over time
+
+
+Link to Code
+========================================================
+
+See: https://github.com/emng18/repository

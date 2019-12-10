@@ -1,0 +1,292 @@
+---
+title: "694 Project Markdown"
+author: "Elliot Ng"
+date: "October 11, 2019"
+output: html_document
+---
+
+On Yelp, there are many restaurants of the same culture in the same general area. These restaurants all tend to have similar ratings, making it hard to choose a clear winner. I implemented two stricter rating methods and examined their overall effect on the original ratings. The Yelp public data set was used for this problem.
+
+The first method was to only accept ratings from users who have reviewed multiple restaurants of the same type of cuisine. This eliminates bias from users who do not frequently eat the cusines they review. This method yielded a 0.075 lower star rating on average for each restaurant, which was not very significant.
+
+The second method was to only examine ratings from users who are from the culture of cusine that they reviewed (i.e only look at Japanese reviewers who reviewed Japanese food). People of the same culture of the cuisine they are reviewing may be more strict/harsh, which can have a significant impact on original ratings. This method yielded a 0.26 lower star rating on average for each restaurant, which is much more significant. 
+
+
+
+```{r}
+library(pacman)
+p_load(tidyverse)
+```
+
+
+
+The data for this project can be obtained using the ConvertYelp.py code, which takes the JSON data from the Yelp Academic Dataset and outputs .csv files of the data. The Dataset can be found on https://www.yelp.com/dataset/challenge. 
+```{r}
+#reviews<- read.csv(file="./data/yelp_academic_dataset_review.csv",   header = FALSE)
+#users <-read.csv(file="./data/yelp_academic_dataset_user.csv",     header = FALSE)
+#businesses<- read.csv(file="./data/yelp_academic_dataset_business.csv", header = FALSE)
+
+```
+
+
+```{r}
+colnames(reviews)[1] = "user_id"
+colnames(reviews)[2] = "business_id"
+colnames(reviews)[3] = "stars"
+colnames(users)[1] = "user_id"
+colnames(users)[2] = "user_name"
+colnames(businesses)[1] = "business_id"
+colnames(businesses)[2] = "city"
+colnames(businesses)[3] = "business_name"
+colnames(businesses)[4] = "categories"
+colnames(businesses)[5] = "review_count"
+colnames(businesses)[6] = "avg_stars"
+```
+
+
+Join the datasets into one:
+```{r}
+ru  <- inner_join(reviews, users)
+rub <- inner_join(ru, businesses)
+```
+
+
+# Part 2a:  Analysis of Method 1 -- Initial Analysis #
+
+```{r}
+# Add "is_indian" field for any review that has "Indian" in "categories"
+rub$is_indian <- grepl("Indian", rub$categories) == TRUE
+```
+
+```{r}
+# Make a dataframe of just reviews of Indian restaurants
+indian <- subset(rub, is_indian == TRUE)
+```
+
+```{r}
+# Generate a summary of # of reviews of that cuisine done by each reviewer
+num_reviews_Indian <- indian %>% select(user_id, user_name, is_indian) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_indian))
+```
+
+```{r}
+# Print the table, show the total # of entries, and find the avg # of reviews per user
+table(num_reviews_Indian$tot_rev)
+count(num_reviews_Indian)
+mean(num_reviews_Indian$tot_rev)
+#avg = 1.454 reviews
+```
+
+# Part 2b:  Analysis of Method 1 -- Extension to Other Cuisines #
+
+```{r}
+rub$is_chinese <- grepl("Chinese", rub$categories) == TRUE
+chinese <- subset(rub, is_chinese == TRUE)
+num_reviews_Chinese <- chinese %>% select(user_id, user_name, is_chinese) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_chinese))
+table(num_reviews_Chinese$tot_rev)
+mean(num_reviews_Chinese$tot_rev)
+#mean=1.7
+```
+
+```{r}
+rub$is_mexican <- grepl("Mexican", rub$categories) == TRUE
+mexican <- subset(rub, is_mexican == TRUE)
+num_reviews_Mexican <- mexican %>% select(user_id, user_name, is_mexican) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_mexican))
+table(num_reviews_Mexican$tot_rev)
+count(num_reviews_Mexican)
+mean(num_reviews_Mexican$tot_rev)
+#mean = 1.69
+```
+```{r}
+rub$is_italian <- grepl("Italian", rub$categories) == TRUE
+italian <- subset(rub, is_italian == TRUE)
+num_reviews_Italian <- italian %>% select(user_id, user_name, is_italian) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_italian))
+table(num_reviews_Italian$tot_rev)
+count(num_reviews_Italian)
+mean(num_reviews_Italian$tot_rev)
+#1.666
+```
+```{r}
+# For Japanese, look for "Japanese" or "Sushi"
+rub$is_japanese <- (grepl("Japanese", rub$categories) == TRUE) | 
+                   (grepl("Sushi",    rub$categories) == TRUE)
+japanese <- subset(rub, is_japanese == TRUE)
+num_reviews_Japanese <- japanese %>% select(user_id, user_name, is_japanese) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_japanese))
+table(num_reviews_Japanese$tot_rev)
+count(num_reviews_Japanese)
+mean(num_reviews_Japanese$tot_rev)
+#1.800
+```
+```{r}
+rub$is_greek <- grepl("Greek", rub$categories) == TRUE
+greek <- subset(rub, is_greek == TRUE)
+num_reviews_Greek <- greek %>% select(user_id, user_name, is_greek) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_greek))
+table(num_reviews_Greek$tot_rev)
+count(num_reviews_Greek)
+mean(num_reviews_Greek$tot_rev)
+#1.31
+```
+```{r}
+rub$is_french <- grepl("French", rub$categories) == TRUE
+french <- subset(rub, is_french == TRUE)
+num_reviews_French <- french %>% select(user_id, user_name, is_french) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_french))
+table(num_reviews_French$tot_rev)
+count(num_reviews_French)
+mean(num_reviews_French$tot_rev)
+#1.400
+```
+```{r}
+rub$is_thai <- grepl("Thai", rub$categories) == TRUE
+thai <- subset(rub, is_thai == TRUE)
+num_reviews_Thai <- thai %>% select(user_id, user_name, is_thai) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_thai))
+table(num_reviews_Thai$tot_rev)
+count(num_reviews_Thai)
+mean(num_reviews_Thai$tot_rev)
+#1.44
+```
+```{r}
+rub$is_spanish <- (grepl("Spanish", rub$categories) == TRUE) | 
+                  (grepl("Tapas",   rub$categories) == TRUE)
+spanish <- subset(rub, is_spanish == TRUE)
+num_reviews_Spanish <- spanish %>% select(user_id, user_name, is_spanish) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_spanish))
+table(num_reviews_Spanish$tot_rev)
+count(num_reviews_Spanish)
+mean(num_reviews_Spanish$tot_rev)
+#1.356
+```
+```{r}
+rub$is_mediterranean <- grepl("Mediterranean", rub$categories) == TRUE
+mediterranean <- subset(rub, is_mediterranean == TRUE)
+num_reviews_Mediterranean <- mediterranean %>% select(user_id, user_name, is_mediterranean) %>%
+  group_by(user_id) %>% 
+  summarise(tot_rev = sum(is_mediterranean))
+table(num_reviews_Mediterranean$tot_rev)
+count(num_reviews_Mediterranean)
+mean(num_reviews_Mediterranean$tot_rev)
+#1.398
+```
+# Part 2c:  Analysis of Method 1 -- Apply new weight and see effect #
+
+```{r}
+# Combine num_reviews information with original data frame of indian restaurant reviews
+cin <- inner_join(indian, num_reviews_Indian)
+```
+
+```{r}
+# Generate "weighted_stars" for later calculation
+cin$weighted_stars <- cin$stars * cin$tot_rev
+```
+
+```{r}
+# Use "summarise" to generate a new rating for each restaurant
+new_rating_Indian <- cin %>% select(city, business_name, avg_stars, stars, 
+                                    tot_rev, weighted_stars) %>%
+  group_by(city, business_name, avg_stars) %>%
+  summarise(cnt = n(),
+            avg = sum(stars) / cnt,
+            new = sum(weighted_stars) / sum(tot_rev),
+            dif = new - avg)
+```
+```{r}
+# Print summary data of the effect this new rating has
+summary(new_rating_Indian$dif) 
+```
+
+```{r}
+# Limit to those with at least 5 ratings and redo summary
+nri5 <- subset(new_rating_Indian, cnt > 5)
+summary(nri5$dif)
+#For the first method, we get an average difference of -.075 stars for each restaurant
+```
+
+# Part 3:  Analysis of Method 2 -- Generate "immigrant" rating #
+
+
+
+```{r}
+inames <- scan("indian_names.txt", what = character())
+```
+
+# Add field "reviewer_indian_name" to indian reviews if user name is in the list
+
+
+```{r}
+usernames=c()
+for (i in 1:nrow(indian))
+{
+dum=as.character(indian$user_name[i])
+len=nchar(dum)
+kappa=substring(dum, 3,len-1)
+usernames[i]=kappa
+}
+
+
+indian$reviewer_indian_name <- usernames %in% inames
+```
+
+
+
+
+
+# Generate "istars" for internal calculation later
+
+```{r}
+indian$istars <- indian$stars * indian$reviewer_indian_name
+```
+
+# Find out # of reviewers with a uniquely Indian name
+table(indian$reviewer_indian_name)
+6195/(6195+73672)    # .096
+
+```{r}
+table(indian$reviewer_indian_name)
+```
+
+
+
+
+```{r}
+avg_rating_Indian <- indian %>% select(business_id, business_name, city, stars, 
+                                       avg_stars, reviewer_indian_name, 
+                                       is_indian, istars) %>%
+                                group_by(city, business_name, avg_stars) %>%
+                                summarise(count = n(),
+                                          nin = sum(reviewer_indian_name),
+                                          pin = sum(reviewer_indian_name) / n(),
+                                          avg = sum(stars) / count,
+                                          ias = sum(istars) / nin,
+                                          dif = ias - avg)
+```
+
+```{r}
+summary(avg_rating_Indian$dif) #This tells us how much the ratings differ on average
+```
+
+```{r}
+ari5 <- subset (avg_rating_Indian, nin > 5)#This tells us how much the ratings differ on average, but looking only for restaurants with at least 5 reviews                                
+summary(ari5$dif)
+# We get an average difference of -.26 stars for each restaurant
+
+```
+
+```{r}
+#save.image("workspaceimage.RData")
+```
+
